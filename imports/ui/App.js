@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import ReactDOM from "react-dom";
+import { Meteor } from "meteor/meteor";
 import { withTracker } from "meteor/react-meteor-data";
 import AccountsUIWrapper from "./AccountsUIWrapper";
 
@@ -23,7 +24,9 @@ class App extends Component {
 
     Tasks.insert({
       text,
-      createdAt: new Date()
+      createdAt: new Date(),
+      owner: Meteor.userId(),
+      username: Meteor.user().username
     });
 
     ReactDOM.findDOMNode(this.refs.textInput).value = "";
@@ -58,13 +61,18 @@ class App extends Component {
             Hide Completed Tasks
           </label>
           <AccountsUIWrapper />
-          <form className="new-task" onSubmit={this.handleSubmit.bind(this)}>
-            <input
-              type="text"
-              ref="textInput"
-              placeholder="Type to add new tasks"
-            />
-          </form>
+
+          {this.props.currentUser ? (
+            <form className="new-task" onSubmit={this.handleSubmit.bind(this)}>
+              <input
+                type="text"
+                ref="textInput"
+                placeholder="Type to add new tasks"
+              />
+            </form>
+          ) : (
+            ""
+          )}
         </header>
 
         <ul>{this.renderTasks()}</ul>
@@ -76,6 +84,7 @@ class App extends Component {
 export default withTracker(() => {
   return {
     tasks: Tasks.find({}, { sort: { createdAt: -1 } }).fetch(),
-    incompleteCount: Tasks.find({ checked: { $ne: true } }).count()
+    incompleteCount: Tasks.find({ checked: { $ne: true } }).count(),
+    currentUser: Meteor.user()
   };
 })(App);
